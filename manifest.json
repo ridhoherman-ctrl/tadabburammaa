@@ -1,0 +1,17 @@
+{
+  "name": "99 Hari Tadabbur Juz Amma",
+  "short_name": "Tadabbur",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#115e59",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
