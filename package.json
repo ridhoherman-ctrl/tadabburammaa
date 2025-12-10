@@ -5,14 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "framer-motion": "^11.0.20",
-    "@google/genai": "*"
+    "framer-motion": "^11.0.20"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",

@@ -9,9 +9,17 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // This allows the app to access process.env.API_KEY even in the browser
-      // Vercel injects env vars at build time
       'process.env.API_KEY': JSON.stringify(env.API_KEY)
+    },
+    build: {
+      rollupOptions: {
+        external: ['@google/genai'],
+        output: {
+          paths: {
+            '@google/genai': 'https://esm.sh/@google/genai'
+          }
+        }
+      }
     },
     server: {
       port: 3000
