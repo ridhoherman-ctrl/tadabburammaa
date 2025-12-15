@@ -1,6 +1,9 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Declare process for TS since this is a node file
+declare const process: any;
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load environment variables based on the mode (development/production)

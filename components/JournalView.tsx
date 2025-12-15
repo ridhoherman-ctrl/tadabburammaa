@@ -243,9 +243,8 @@ const ActivityChart: React.FC<{ entries: any[] }> = ({ entries }) => {
 // --- Interactive Tree Component ---
 const InteractiveJournalTree: React.FC<{ 
   entries: any[]; 
-  cachedContent: Record<number, DailyContent>;
   onEntryClick: (entry: any) => void; 
-}> = ({ entries, cachedContent, onEntryClick }) => {
+}> = ({ entries, onEntryClick }) => {
   const sortedEntries = [...entries].sort((a, b) => b.day - a.day); // Descending (Top to Root)
   
   const nodeHeight = 80;
@@ -564,7 +563,6 @@ export const JournalView: React.FC<JournalViewProps> = ({
           <>
             <InteractiveJournalTree 
               entries={entries} 
-              cachedContent={cachedContent}
               onEntryClick={setSelectedEntry} 
             />
             

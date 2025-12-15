@@ -1,6 +1,14 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { DailyContent } from "../types";
 
+// Declare process for TS since @types/node might not be present
+declare const process: {
+  env: {
+    API_KEY?: string;
+    [key: string]: string | undefined;
+  }
+};
+
 const apiKey = process.env.API_KEY || "";
 const ai = new GoogleGenAI({ apiKey });
 
