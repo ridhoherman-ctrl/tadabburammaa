@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { DaySelector } from './components/DaySelector';
 import { TadabburCard } from './components/TadabburCard';
 import { JournalView } from './components/JournalView';
+import { LandingPage } from './components/LandingPage';
 import { DailyContent, UserProgress, AppView, DailyTrack } from './types';
 import { fetchDailyTadabbur } from './services/geminiService';
 
@@ -19,7 +20,8 @@ const defaultTrack: DailyTrack = {
 
 const App: React.FC = () => {
   // State
-  const [view, setView] = useState<AppView>(AppView.GRID);
+  // Default to LANDING view initially
+  const [view, setView] = useState<AppView>(AppView.LANDING);
   const [currentDay, setCurrentDay] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,11 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         setProgress(parsed);
+        // If user has progress, we might typically skip landing, 
+        // but for this request we want to show the aesthetic cover first.
+        // However, if you want to skip landing for returning users:
+        // const hasStarted = Object.keys(parsed.tracker).length > 0;
+        // if (hasStarted) setView(AppView.GRID);
       } catch (e) {
         console.error("Failed to parse saved progress", e);
       }
@@ -186,6 +193,22 @@ const App: React.FC = () => {
 
   // Render Helpers
   const renderContent = () => {
+    // Special case for Landing Page - no layout wrapper
+    if (view === AppView.LANDING) {
+      return (
+        <motion.div
+          key="landing"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, y: -50 }}
+          transition={{ duration: 0.5 }}
+          className="w-full h-full"
+        >
+          <LandingPage onStart={() => setView(AppView.GRID)} />
+        </motion.div>
+      );
+    }
+
     let key = '';
     let contentElement = null;
 
@@ -247,40 +270,40 @@ const App: React.FC = () => {
     if (!contentElement) return null;
 
     return (
-      <motion.div
-        key={key}
-        initial={{ opacity: 0, y: 15, filter: 'blur(5px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{ opacity: 0, y: -15, filter: 'blur(5px)' }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full"
-      >
-        {contentElement}
-      </motion.div>
+      <div className="min-h-screen flex flex-col bg-stone-50 font-sans">
+        <Header 
+          completedCount={getCompletedDaysList().length} 
+          totalDays={TOTAL_DAYS}
+          onHomeClick={handleHomeClick}
+          onJournalClick={handleJournalClick}
+          isOnline={isOnline}
+          isLoading={isLoading}
+        />
+        
+        <main className="flex-1 w-full relative">
+          <motion.div
+            key={key}
+            initial={{ opacity: 0, y: 15, filter: 'blur(5px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -15, filter: 'blur(5px)' }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full"
+          >
+            {contentElement}
+          </motion.div>
+        </main>
+
+        <footer className="bg-teal-900 text-teal-300/60 py-8 text-center text-sm mt-8 border-t border-teal-800">
+          <p className="font-serif-text italic">© 2024 Tadabbur Juz Amma App</p>
+        </footer>
+      </div>
     );
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 font-sans">
-      <Header 
-        completedCount={getCompletedDaysList().length} 
-        totalDays={TOTAL_DAYS}
-        onHomeClick={handleHomeClick}
-        onJournalClick={handleJournalClick}
-        isOnline={isOnline}
-        isLoading={isLoading}
-      />
-      
-      <main className="flex-1 w-full relative">
-        <AnimatePresence mode="wait">
-           {renderContent()}
-        </AnimatePresence>
-      </main>
-
-      <footer className="bg-teal-900 text-teal-300/60 py-8 text-center text-sm mt-8 border-t border-teal-800">
-        <p className="font-serif-text italic">© 2024 Tadabbur Juz Amma App</p>
-      </footer>
-    </div>
+    <AnimatePresence mode="wait">
+       {renderContent()}
+    </AnimatePresence>
   );
 };
 

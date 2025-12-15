@@ -26,6 +26,7 @@ export interface UserProgress {
 }
 
 export enum AppView {
+  LANDING = 'LANDING',
   GRID = 'GRID',
   DETAIL = 'DETAIL',
   JOURNAL = 'JOURNAL',
