@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DailyContent, DailyTrack } from '../types';
 
 interface TadabburCardProps {
@@ -18,6 +18,104 @@ const OrnamentalDivider = () => (
   </div>
 );
 
+// Font Size Controller Component
+const FontController: React.FC<{ size: number; setSize: (s: number) => void }> = ({ size, setSize }) => (
+  <div className="flex items-center gap-2 bg-stone-100/80 rounded-full p-1 shadow-sm border border-stone-200 backdrop-blur-sm">
+    <button 
+      onClick={() => setSize(Math.max(0, size - 1))}
+      className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${size === 0 ? 'text-stone-300' : 'text-teal-700 hover:bg-white'}`}
+      disabled={size === 0}
+      title="Perkecil Teks"
+    >
+      <span className="text-xs font-bold">A-</span>
+    </button>
+    <div className="w-px h-4 bg-stone-300"></div>
+    <button 
+      onClick={() => setSize(Math.min(3, size + 1))}
+      className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${size === 3 ? 'text-stone-300' : 'text-teal-700 hover:bg-white'}`}
+      disabled={size === 3}
+      title="Perbesar Teks"
+    >
+      <span className="text-lg font-bold">A+</span>
+    </button>
+  </div>
+);
+
+// Audio Player Component
+const AudioPlayer: React.FC<{ surahRef: number; ayahRef: number }> = ({ surahRef, ayahRef }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = async () => {
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    } else {
+      if (!audioUrl) {
+        setIsLoadingAudio(true);
+        try {
+          // Fetch audio URL from Al-Quran Cloud API (Mishary Alafasy)
+          const response = await fetch(`https://api.alquran.cloud/v1/ayah/${surahRef}:${ayahRef}/ar.alafasy`);
+          const data = await response.json();
+          if (data.data && data.data.audio) {
+            setAudioUrl(data.data.audio);
+            // Wait for state update then play
+            setTimeout(() => {
+                if (audioRef.current) {
+                    audioRef.current.play();
+                    setIsPlaying(true);
+                }
+            }, 100);
+          }
+        } catch (e) {
+          console.error("Audio fetch failed", e);
+        } finally {
+          setIsLoadingAudio(false);
+        }
+      } else {
+        audioRef.current?.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  return (
+    <div className="mt-6 flex justify-center">
+        {audioUrl && <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />}
+        
+        <button 
+          onClick={togglePlay}
+          className={`
+            flex items-center gap-2 px-5 py-2 rounded-full shadow-md transition-all duration-300
+            ${isPlaying 
+                ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                : 'bg-teal-700 text-white hover:bg-teal-800'
+            }
+          `}
+        >
+            {isLoadingAudio ? (
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            ) : isPlaying ? (
+                <>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <span className="text-sm font-bold">Jeda</span>
+                </>
+            ) : (
+                <>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span className="text-sm font-bold">Dengar Ayat</span>
+                </>
+            )}
+        </button>
+    </div>
+  );
+};
+
 export const TadabburCard: React.FC<TadabburCardProps> = ({ 
   content, 
   track, 
@@ -30,9 +128,15 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [fontSizeLevel, setFontSizeLevel] = useState(1); // 0=Small, 1=Normal, 2=Large, 3=XL
 
   // Check if all tasks are completed
   const isAllTasksCompleted = track?.tadabburRead && track?.practiceDone && track?.duaDone;
+
+  // Font Size Classes Mapping
+  const arabicSizes = ["text-3xl md:text-4xl", "text-4xl md:text-5xl", "text-5xl md:text-6xl", "text-6xl md:text-7xl"];
+  const translationSizes = ["text-base", "text-lg", "text-xl", "text-2xl"];
+  const bodySizes = ["text-base", "text-lg", "text-xl", "text-2xl"];
 
   // Loading messages sequence
   const loadingMessages = [
@@ -132,12 +236,16 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
     }`}>
       
       {/* 1. Ayat Card */}
-      <section className="bg-white rounded-t-3xl rounded-b-lg shadow-lg border border-stone-100 overflow-hidden relative">
-         <div className="bg-teal-50 px-6 py-3 border-b border-teal-100 flex justify-between items-center">
+      <section className="bg-white rounded-t-3xl rounded-b-lg shadow-lg border border-stone-100 overflow-hidden relative group">
+         <div className="bg-teal-50 px-6 py-3 border-b border-teal-100 flex justify-between items-center relative z-10">
             <span className="text-xs font-bold tracking-widest text-teal-700 uppercase">Hari ke-{content.day}</span>
-            {!isOnline && (
-              <span className="text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded">Offline Mode</span>
-            )}
+            <div className="flex items-center gap-3">
+               {!isOnline && (
+                 <span className="text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded">Offline Mode</span>
+               )}
+               {/* Font Controller */}
+               <FontController size={fontSizeLevel} setSize={setFontSizeLevel} />
+            </div>
          </div>
 
          <div className="p-8 text-center relative">
@@ -152,13 +260,21 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
               {content.surahName} : {content.ayahNumber}
             </div>
 
-            <h2 className="font-arabic text-4xl md:text-5xl leading-[1.6] md:leading-[1.6] text-teal-900 mb-8 dir-rtl py-2" dir="rtl">
+            <h2 
+              className={`font-arabic text-teal-900 mb-8 dir-rtl py-2 leading-relaxed transition-all duration-300 ${arabicSizes[fontSizeLevel]}`} 
+              dir="rtl"
+            >
               {content.arabicText}
             </h2>
             
-            <p className="text-stone-600 font-serif-text italic text-lg leading-relaxed">
+            <p className={`text-stone-600 font-serif-text italic leading-relaxed transition-all duration-300 ${translationSizes[fontSizeLevel]}`}>
               "{content.translation}"
             </p>
+
+            {/* Audio Player if references exist */}
+            {content.surahRef && content.ayahRef && (
+                <AudioPlayer surahRef={content.surahRef} ayahRef={content.ayahRef} />
+            )}
          </div>
       </section>
 
@@ -170,7 +286,7 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
           <h3 className="font-serif-text text-2xl font-bold text-teal-900">Hikmah Tadabbur</h3>
           <div className="w-12 h-1 bg-amber-400 mx-auto mt-2 rounded-full"></div>
         </div>
-        <div className="bg-[#FFFDF5] p-6 md:p-8 rounded-lg shadow-sm border border-stone-200 text-stone-700 leading-8 font-serif-text text-lg">
+        <div className={`bg-[#FFFDF5] p-6 md:p-8 rounded-lg shadow-sm border border-stone-200 text-stone-700 font-serif-text transition-all duration-300 leading-relaxed ${bodySizes[fontSizeLevel]}`}>
           {content.hikmah}
         </div>
       </section>
@@ -185,7 +301,7 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
           </h3>
           <ul className="space-y-4">
             {praktikSteps.map((step, idx) => (
-              <li key={idx} className="flex gap-4 text-stone-700 items-start">
+              <li key={idx} className={`flex gap-4 text-stone-700 items-start ${bodySizes[fontSizeLevel] === 'text-2xl' ? 'text-xl' : 'text-base'}`}>
                 <span className="font-arabic text-teal-500 font-bold text-xl mt-[-4px]">.</span>
                 <span className="font-medium">{step}</span>
               </li>
@@ -197,7 +313,9 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
         <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-20 h-20 bg-amber-100 rounded-bl-full opacity-50 -mr-10 -mt-10"></div>
           <h3 className="font-bold text-stone-800 mb-4 font-serif-text text-lg relative z-10">Hadis Pilihan</h3>
-          <p className="text-stone-800 font-serif-text italic mb-3 relative z-10">"{content.hadithText}"</p>
+          <p className={`text-stone-800 font-serif-text italic mb-3 relative z-10 transition-all duration-300 ${bodySizes[fontSizeLevel]}`}>
+            "{content.hadithText}"
+          </p>
           <p className="text-amber-700 text-xs font-bold uppercase tracking-widest text-right relative z-10">— {content.hadithSource}</p>
         </div>
       </div>
@@ -215,7 +333,7 @@ export const TadabburCard: React.FC<TadabburCardProps> = ({
                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813a3.75 3.75 0 002.576-2.576l.813-2.846A.75.75 0 019 4.5z" clipRule="evenodd" />
                  </svg>
                </div>
-               <span className="text-stone-600 italic font-serif-text leading-relaxed text-[15px]">
+               <span className={`text-stone-600 italic font-serif-text leading-relaxed transition-all duration-300 ${bodySizes[fontSizeLevel]}`}>
                  {q}
                </span>
              </li>

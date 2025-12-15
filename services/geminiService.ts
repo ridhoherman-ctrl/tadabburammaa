@@ -8,8 +8,10 @@ const dailyContentSchema: Schema = {
   type: Type.OBJECT,
   properties: {
     surahName: { type: Type.STRING, description: "Nama Surah di Juz Amma (misal: An-Naba)" },
-    ayahNumber: { type: Type.STRING, description: "Nomor ayat yang dipilih" },
-    arabicText: { type: Type.STRING, description: "Teks Arab dari ayat tersebut" },
+    surahRef: { type: Type.INTEGER, description: "Nomor urut Surah dalam Al-Quran (misal: 78)" },
+    ayahRef: { type: Type.INTEGER, description: "Nomor ayat spesifik (angka saja, misal: 10)" },
+    ayahNumber: { type: Type.STRING, description: "Tampilan nomor ayat (misal: '10' atau '10-11')" },
+    arabicText: { type: Type.STRING, description: "Teks Arab dari ayat tersebut (lengkap dengan harakat)" },
     translation: { type: Type.STRING, description: "Terjemahan Bahasa Indonesia mengacu pada Kemenag" },
     hikmah: { type: Type.STRING, description: "Hikmah mendalam dari ayat tersebut (1-3 paragraf pendek)" },
     praktik: { 
@@ -25,7 +27,7 @@ const dailyContentSchema: Schema = {
       description: "2-3 pertanyaan singkat untuk refleksi diri/journaling"
     }
   },
-  required: ["surahName", "ayahNumber", "arabicText", "translation", "hikmah", "praktik", "hadithText", "hadithSource", "reflectionQuestions"],
+  required: ["surahName", "surahRef", "ayahRef", "ayahNumber", "arabicText", "translation", "hikmah", "praktik", "hadithText", "hadithSource", "reflectionQuestions"],
 };
 
 export const fetchDailyTadabbur = async (day: number): Promise<DailyContent> => {
@@ -35,12 +37,13 @@ export const fetchDailyTadabbur = async (day: number): Promise<DailyContent> => 
       Buatkan konten Tadabbur Al-Quran untuk Hari ke-${day} dari program 99 Hari Tadabbur Juz Amma.
       
       Struktur Konten:
-      1. **Ayat Hari Ini**: Pilih satu potongan ayat bermakna dari Juz Amma (Surah 78-114).
-      2. **Terjemahan**: Gunakan terjemahan baku (gaya Kemenag) yang akurat.
-      3. **Hikmah Tadabbur**: 1-3 paragraf pendek ringkasan tafsir/makna yang menyentuh hati.
-      4. **Praktik Ayat**: 2-4 langkah aksi konkret (checklist) untuk diamalkan hari ini (misal: sedekah, minta maaf, dzikir khusus).
-      5. **Hadis Pendukung**: Satu hadis sahih yang relevan dengan tema/amalan.
-      6. **Refleksi Mini**: 2-3 pertanyaan introspektif untuk user jawab di jurnal mereka.
+      1. **Ayat Hari Ini**: Pilih SATU ayat (atau potongan pendek) yang sangat bermakna dari Juz Amma (Surah 78-114). 
+      2. **Detail Referensi**: Pastikan mengisi 'surahRef' (nomor surat 1-114) dan 'ayahRef' (nomor ayat) dengan integer yang benar agar audio player berfungsi.
+      3. **Terjemahan**: Gunakan terjemahan baku (gaya Kemenag) yang akurat.
+      4. **Hikmah Tadabbur**: 1-3 paragraf pendek ringkasan tafsir/makna yang menyentuh hati.
+      5. **Praktik Ayat**: 2-4 langkah aksi konkret (checklist) untuk diamalkan hari ini (misal: sedekah, minta maaf, dzikir khusus).
+      6. **Hadis Pendukung**: Satu hadis sahih yang relevan dengan tema/amalan.
+      7. **Refleksi Mini**: 2-3 pertanyaan introspektif untuk user jawab di jurnal mereka.
       
       Pastikan output adalah JSON valid sesuai skema. Nada bahasa: mengajak, lembut, dan inspiratif.
     `;
